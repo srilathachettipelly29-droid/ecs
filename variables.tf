@@ -16,7 +16,7 @@ variable "instance_type" {
 variable "ami_id" {
   description = "AMI ID"
   type        = string
-  default     = "ami-0c1fe732b5494dc14"
+  default     = "ami-0317b0f0a0144b137"
 }
 
 

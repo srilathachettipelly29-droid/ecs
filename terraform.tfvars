@@ -8,7 +8,7 @@ public_subnet_cidrs = [
 
 instance_type  = "t2.small"
 instance_count = 2
-ami_id         = "ami-0f5ee92e2d63afc18"
+ami_id         = "ami-0c1fe732b5494dc14"
 key_name       = "my-keypair"
 
 # ASG Configuration

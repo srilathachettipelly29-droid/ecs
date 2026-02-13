@@ -89,7 +89,6 @@ resource "aws_ecs_task_definition" "java_app" {
   }
 }
 
-# ECS Service
 resource "aws_ecs_service" "java_app" {
   name            = "java-fargate-service"
   cluster         = aws_ecs_cluster.main.id

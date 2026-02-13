@@ -13,10 +13,12 @@ variable "public_subnet_cidrs" {
 variable "instance_type" {
   type = string
 }
-
 variable "ami_id" {
-  type = string
+  description = "AMI ID"
+  type        = string
+  default     = "ami-0c1fe732b5494dc14"
 }
+
 
 variable "key_name" {
   type = string

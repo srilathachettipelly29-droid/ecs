@@ -1,10 +1,12 @@
+# Application Load Balancer
 resource "aws_lb" "alb" {
+  name               = "java-app-alb"
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb_sg.id]
   subnets            = aws_subnet.public[*].id
 }
 
-
+# ALB Listener
 resource "aws_lb_listener" "listener" {
   load_balancer_arn = aws_lb.alb.arn
   port              = 80
@@ -15,7 +17,6 @@ resource "aws_lb_listener" "listener" {
     target_group_arn = aws_lb_target_group.tg.arn
   }
 }
-
 
 
 resource "aws_security_group" "alb_sg" {
@@ -38,14 +39,20 @@ resource "aws_security_group" "alb_sg" {
   }
 }
 
+# Target Group for Fargate (must use 'ip' target type for Fargate)
 resource "aws_lb_target_group" "tg" {
-  name        = "ecs-tg"
-  port        = 80
+  name        = "java-app-tg"
+  port        = 8080
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id
-  target_type = "ip" # IMPORTANT
+  target_type = "ip"   # IMPORTANT: Fargate requires 'ip', not 'instance'
 
   health_check {
-    path = "/"
+    path                = "/"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 2
+    matcher             = "200-399"
   }
 }

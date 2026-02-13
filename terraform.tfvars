@@ -12,7 +12,7 @@ ami_id         = "ami-0c1fe732b5494dc14"
 key_name       = "my-keypair"
 
 # ASG Configuration
-environment          = "prod"
+environment          = "dev"
 asg_min_size         = 2
 asg_max_size         = 6
 asg_desired_capacity = 3

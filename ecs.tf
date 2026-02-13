@@ -39,56 +39,33 @@ resource "aws_cloudwatch_log_group" "ecs_logs" {
 
 # ECS Task Definition
 resource "aws_ecs_task_definition" "java_app" {
-  family                   = "java-fargate-task"
+  family                   = "java-app-task"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = "512"
-  memory                   = "1024"
-  execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
-  task_role_arn            = aws_iam_role.ecs_task_role.arn
+  cpu                      = "256"
+  memory                   = "512"
+
+  execution_role_arn = aws_iam_role.ecs_task_execution_role.arn
+  task_role_arn      = aws_iam_role.ecs_task_role.arn
 
   container_definitions = jsonencode([
     {
       name      = "java-app"
       image     = "${aws_ecr_repository.java_app.repository_url}:latest"
+      cpu       = 256
+      memory    = 512
       essential = true
-
       portMappings = [
         {
-          protocol      = "tcp"
           containerPort = 8080
           hostPort      = 8080
         }
       ]
-
-      logConfiguration = {
-        logDriver = "awslogs"
-        options = {
-          "awslogs-group"         = aws_cloudwatch_log_group.ecs_logs.name
-          "awslogs-region"        = var.aws_region
-          "awslogs-stream-prefix" = "ecs"
-        }
-      }
-
-      environment = [
-        {
-          name  = "JAVA_OPTS"
-          value = "-Xmx512m -Xms256m"
-        },
-        {
-          name  = "APP_PORT"
-          value = "8080"
-        }
-      ]
     }
   ])
-
-  tags = {
-    Name        = "java-task-definition"
-    Environment = var.environment
-  }
 }
 
+# ECS Service
 resource "aws_ecs_service" "java_app" {
   name            = "java-fargate-service"
   cluster         = aws_ecs_cluster.main.id

@@ -57,11 +57,6 @@ resource "aws_ecr_lifecycle_policy" "java_app" {
   })
 }
 
-# Output ECR repository URL
-output "ecr_repository_url" {
-  description = "ECR repository URL for Java application"
-  value       = aws_ecr_repository.java_app.repository_url
-}
 
 output "ecr_repository_arn" {
   description = "ECR repository ARN"

@@ -110,7 +110,7 @@ resource "aws_ecs_service" "java_app" {
   }
 
   depends_on = [
-    aws_lb_listener.main,
+    aws_lb_listener.listener,
     aws_iam_role_policy.ecs_task_execution_role_policy
   ]
 
@@ -174,7 +174,8 @@ resource "aws_security_group" "ecs_tasks" {
     from_port       = 8080
     to_port         = 8080
     protocol        = "tcp"
-    security_groups = [aws_security_group.alb.id]
+    security_groups = [aws_security_group.alb_sg.id]
+
   }
 
   egress {

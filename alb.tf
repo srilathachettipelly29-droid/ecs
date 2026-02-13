@@ -41,7 +41,7 @@ resource "aws_security_group" "alb_sg" {
 
 # Target Group for Fargate (must use 'ip' target type for Fargate)
 resource "aws_lb_target_group" "tg" {
-  name        = "java-app-tg"
+  name        = "ecs-tg"
   port        = 8080
   protocol    = "HTTP"
   vpc_id      = aws_vpc.main.id

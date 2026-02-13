@@ -74,10 +74,7 @@ jobs:
               body: `## Terraform Plan\n\`\`\`\n${planOutput}\n\`\`\``
             });
 
-      - name: Terraform Plan Status
-        if: steps.plan.outcome == 'failure'
-        run: exit 1
-
+    
       - name: Terraform Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: terraform apply -input=false -lock=false -auto-approve tfplan

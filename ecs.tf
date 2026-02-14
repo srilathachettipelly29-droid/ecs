@@ -28,7 +28,7 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
 
 # CloudWatch Log Group for ECS
 resource "aws_cloudwatch_log_group" "ecs_logs" {
-  name              = "/ecs/java-fargate-app"
+  name = "/ecs/java-fargate-app"
   retention_in_days = 7
 
   tags = {
@@ -61,9 +61,18 @@ resource "aws_ecs_task_definition" "java_app" {
           hostPort      = 8080
         }
       ]
+      logConfiguration = {
+      logDriver = "awslogs"
+      options = {
+        awslogs-group         = "/ecs/java-fargate-app"
+        awslogs-region        = "us-east-1"
+        awslogs-stream-prefix = "ecs"
+      }
+      }
     }
   ])
 }
+
 
 # ECS Service
 resource "aws_ecs_service" "java_app" {

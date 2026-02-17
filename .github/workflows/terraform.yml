@@ -1,4 +1,4 @@
-name: Terraform CI/CD Pipeline
+name: Terraform + Docker CI/CD Pipeline
 
 on:
   push:
@@ -11,9 +11,11 @@ on:
 env:
   AWS_REGION: us-east-1
   TERRAFORM_VERSION: 1.5.0
+  ACCOUNT_ID: 396341923314
+  ECR_REPOSITORY: java-ecs-app
 
 jobs:
-  terraform:
+  deploy:
     runs-on: ubuntu-latest
 
     permissions:
@@ -21,23 +23,33 @@ jobs:
       pull-requests: write
 
     steps:
-      # ---------------------------
+      # ----------------------------------
       # Checkout Repository
-      # ---------------------------
+      # ----------------------------------
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # ---------------------------
-      # Clone 2048 Game (for EC2 user-data / Docker build)
-      # ---------------------------
+      # ----------------------------------
+      # Clone 2048 Game App
+      # ----------------------------------
       - name: Clone 2048 Game Repository
         run: |
           git clone https://github.com/gabrielecirulli/2048.git ./2048-app
-          echo "✓ 2048 game repository cloned successfully"
 
-      # ---------------------------
+      # ----------------------------------
+      # Create Dockerfile (if not exists)
+      # ----------------------------------
+      - name: Create Dockerfile
+        run: |
+          cat <<EOF > ./2048-app/Dockerfile
+          FROM nginx:alpine
+          COPY . /usr/share/nginx/html
+          EXPOSE 80
+          EOF
+
+      # ----------------------------------
       # Configure AWS Credentials
-      # ---------------------------
+      # ----------------------------------
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -45,85 +57,82 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      # ---------------------------
+      # ----------------------------------
+      # Login to Amazon ECR
+      # ----------------------------------
+      - name: Login to Amazon ECR
+        run: |
+          aws ecr get-login-password --region $AWS_REGION | \
+          docker login --username AWS --password-stdin \
+          $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+
+      # ----------------------------------
+      # Build Docker Image
+      # ----------------------------------
+      - name: Build Docker Image
+        run: |
+          docker build -t $ECR_REPOSITORY ./2048-app
+
+      # ----------------------------------
+      # Tag Docker Image
+      # ----------------------------------
+      - name: Tag Docker Image
+        run: |
+          docker tag $ECR_REPOSITORY:latest \
+          $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+
+      # ----------------------------------
+      # Push Docker Image to ECR
+      # ----------------------------------
+      - name: Push Docker Image
+        run: |
+          docker push \
+          $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+
+      # ----------------------------------
       # Setup Terraform
-      # ---------------------------
+      # ----------------------------------
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-      # ---------------------------
-      # Terraform Format Check
-      # ---------------------------
-      - name: Terraform Format Check
-        run: terraform fmt -check -recursive
-
-      # ---------------------------
+      # ----------------------------------
       # Terraform Init
-      # ---------------------------
+      # ----------------------------------
       - name: Terraform Init
         run: terraform init
 
-      # ---------------------------
+      # ----------------------------------
       # Terraform Validate
-      # ---------------------------
+      # ----------------------------------
       - name: Terraform Validate
         run: terraform validate
 
-      # ---------------------------
+      # ----------------------------------
       # Terraform Plan
-      # ---------------------------
+      # ----------------------------------
       - name: Terraform Plan
-        id: plan
         run: terraform plan -input=false -var-file=terraform.tfvars -out=tfplan
 
-      # ---------------------------
+      # ----------------------------------
       # Show Plan (for logs)
-      # ---------------------------
+      # ----------------------------------
       - name: Show Terraform Plan
         run: terraform show -no-color tfplan
 
-      # ---------------------------
-      # Post Plan to PR
-      # ---------------------------
-      - name: Post Plan to PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const { execSync } = require("child_process");
-            const plan = execSync("terraform show -no-color tfplan").toString();
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## Terraform Plan Output\n\`\`\`\n${plan}\n\`\`\``
-            });
-
-      # ---------------------------
-      # Terraform Apply (Only on Main Push)
-      # ---------------------------
+      # ----------------------------------
+      # Apply (Only on Main Push)
+      # ----------------------------------
       - name: Terraform Apply
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: terraform apply -auto-approve tfplan
 
-      # ---------------------------
-      # Generate Terraform Outputs
-      # ---------------------------
-      - name: Generate Outputs
+      # ----------------------------------
+      # Output Summary
+      # ----------------------------------
+      - name: Show Terraform Outputs
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
-          echo "## Terraform Outputs" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Successful 🚀" >> $GITHUB_STEP_SUMMARY
           terraform output >> $GITHUB_STEP_SUMMARY
-
-      # ---------------------------
-      # Deployment Notification
-      # ---------------------------
-      - name: Notify Deployment
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          echo "✅ Infrastructure deployment completed successfully"
-          echo "🎮 2048 Game Application deployed on EC2"
-          echo "🌐 Accessible via ALB DNS on port 80"

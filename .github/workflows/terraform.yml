@@ -1,4 +1,4 @@
-name: Terraform + Docker CI/CD Pipeline
+name: ECS Terraform CI/CD Pipeline
 
 on:
   push:
@@ -10,129 +10,114 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  TERRAFORM_VERSION: 1.5.0
   ACCOUNT_ID: 396341923314
   ECR_REPOSITORY: java-ecs-app
+  TERRAFORM_VERSION: 1.5.0
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       pull-requests: write
 
     steps:
-      # ----------------------------------
-      # Checkout Repository
-      # ----------------------------------
-      - name: Checkout Code
-        uses: actions/checkout@v4
 
-      # ----------------------------------
-      # Clone 2048 Game App
-      # ----------------------------------
-      - name: Clone 2048 Game Repository
-        run: |
-          git clone https://github.com/gabrielecirulli/2048.git ./2048-app
+    # -----------------------------------
+    # Checkout Terraform Repo
+    # -----------------------------------
+    - name: Checkout Repository
+      uses: actions/checkout@v4
 
-      # ----------------------------------
-      # Create Dockerfile (if not exists)
-      # ----------------------------------
-      - name: Create Dockerfile
-        run: |
-          cat <<EOF > ./2048-app/Dockerfile
-          FROM nginx:alpine
-          COPY . /usr/share/nginx/html
-          EXPOSE 80
-          EOF
+    # -----------------------------------
+    # Clone 2048 Game Source Code
+    # -----------------------------------
+    - name: Clone 2048 Game Repository
+      run: |
+        git clone https://github.com/BasimAhmedKhan/2048-Game.git ./2048-app
 
-      # ----------------------------------
-      # Configure AWS Credentials
-      # ----------------------------------
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+    # -----------------------------------
+    # Create Dockerfile Automatically
+    # -----------------------------------
+    - name: Create Dockerfile
+      run: |
+        cat <<EOF > ./2048-app/Dockerfile
+        FROM nginx:alpine
+        COPY . /usr/share/nginx/html
+        EXPOSE 80
+        EOF
 
-      # ----------------------------------
-      # Login to Amazon ECR
-      # ----------------------------------
-      - name: Login to Amazon ECR
-        run: |
-          aws ecr get-login-password --region $AWS_REGION | \
-          docker login --username AWS --password-stdin \
-          $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+    # -----------------------------------
+    # Configure AWS Credentials
+    # -----------------------------------
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
 
-      # ----------------------------------
-      # Build Docker Image
-      # ----------------------------------
-      - name: Build Docker Image
-        run: |
-          docker build -t $ECR_REPOSITORY ./2048-app
+    # -----------------------------------
+    # Login to Amazon ECR
+    # -----------------------------------
+    - name: Login to Amazon ECR
+      run: |
+        aws ecr get-login-password --region $AWS_REGION | \
+        docker login --username AWS --password-stdin \
+        $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
-      # ----------------------------------
-      # Tag Docker Image
-      # ----------------------------------
-      - name: Tag Docker Image
-        run: |
-          docker tag $ECR_REPOSITORY:latest \
-          $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+    # -----------------------------------
+    # Build Docker Image
+    # -----------------------------------
+    - name: Build Docker Image
+      run: |
+        docker build -t $ECR_REPOSITORY ./2048-app
 
-      # ----------------------------------
-      # Push Docker Image to ECR
-      # ----------------------------------
-      - name: Push Docker Image
-        run: |
-          docker push \
-          $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+    # -----------------------------------
+    # Tag Docker Image
+    # -----------------------------------
+    - name: Tag Docker Image
+      run: |
+        docker tag $ECR_REPOSITORY:latest \
+        $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
 
-      # ----------------------------------
-      # Setup Terraform
-      # ----------------------------------
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: ${{ env.TERRAFORM_VERSION }}
+    # -----------------------------------
+    # Push Image to ECR
+    # -----------------------------------
+    - name: Push Docker Image
+      run: |
+        docker push \
+        $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
 
-      # ----------------------------------
-      # Terraform Init
-      # ----------------------------------
-      - name: Terraform Init
-        run: terraform init
+    # -----------------------------------
+    # Setup Terraform
+    # -----------------------------------
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
 
-      # ----------------------------------
-      # Terraform Validate
-      # ----------------------------------
-      - name: Terraform Validate
-        run: terraform validate
+    # -----------------------------------
+    # Terraform Init
+    # -----------------------------------
+    - name: Terraform Init
+      run: terraform init
 
-      # ----------------------------------
-      # Terraform Plan
-      # ----------------------------------
-      - name: Terraform Plan
-        run: terraform plan -input=false -var-file=terraform.tfvars -out=tfplan
+    # -----------------------------------
+    # Terraform Validate
+    # -----------------------------------
+    - name: Terraform Validate
+      run: terraform validate
 
-      # ----------------------------------
-      # Show Plan (for logs)
-      # ----------------------------------
-      - name: Show Terraform Plan
-        run: terraform show -no-color tfplan
+    # -----------------------------------
+    # Terraform Plan
+    # -----------------------------------
+    - name: Terraform Plan
+      run: terraform plan -var-file=terraform.tfvars -out=tfplan
 
-      # ----------------------------------
-      # Apply (Only on Main Push)
-      # ----------------------------------
-      - name: Terraform Apply
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: terraform apply -auto-approve tfplan
-
-      # ----------------------------------
-      # Output Summary
-      # ----------------------------------
-      - name: Show Terraform Outputs
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: |
-          echo "## Deployment Successful 🚀" >> $GITHUB_STEP_SUMMARY
-          terraform output >> $GITHUB_STEP_SUMMARY
+    # -----------------------------------
+    # Terraform Apply (only on main push)
+    # -----------------------------------
+    - name: Terraform Apply
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      run: terraform apply -auto-approve tfplan

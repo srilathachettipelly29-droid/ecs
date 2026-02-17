@@ -56,3 +56,15 @@ resource "aws_lb_target_group" "tg" {
     matcher             = "200-399"
   }
 }
+
+resource "aws_route53_record" "app" {
+  zone_id = aws_route53_zone.main.zone_id
+  name    = "app.java-app-alb-1330375096.us-east-1.elb.amazonaws.com"
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.alb.dns_name
+    zone_id                = aws_lb.alb.zone_id
+    evaluate_target_health = true
+  }
+}

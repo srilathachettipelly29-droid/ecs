@@ -174,3 +174,8 @@ resource "aws_security_group" "ecs_tasks" {
     Name = "ecs-tasks-sg"
   }
 }
+
+resource "aws_route53_zone" "main" {
+  name = "java-app-alb-1330375096.us-east-1.elb.amazonaws.com"
+}
+

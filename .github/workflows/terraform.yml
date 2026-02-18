@@ -84,9 +84,9 @@ jobs:
 =======
       - name: Terraform Validate
         run: terraform validate
+    
     # SonarQube Scan
     # -------------------------------
-    
       - name: SonarQube Scan
         uses: SonarSource/sonarcloud-github-action@master
         with:
@@ -100,7 +100,6 @@ jobs:
         id: plan
         run: terraform plan -input=false -lock=false -var-file=terraform.tfvars -out=tfplan
         continue-on-error: true
->>>>>>> a6a3020 (Added SonarQube configuration)
 
     # -----------------------------------
     # Push Image to ECR

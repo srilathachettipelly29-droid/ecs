@@ -81,12 +81,12 @@ jobs:
       run: |
         docker tag $ECR_REPOSITORY:latest \
         $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
-=======
-      - name: Terraform Validate
-        run: terraform validate
-    
-    # SonarQube Scan
-    # -------------------------------
+
+    - name: Terraform Validate
+      run: terraform validate
+      
+      # SonarQube Scan
+      # -------------------------------
       - name: SonarQube Scan
         uses: SonarSource/sonarcloud-github-action@master
         with:

@@ -66,6 +66,7 @@ jobs:
         docker login --username AWS --password-stdin \
         $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
+<<<<<<< HEAD
     # -----------------------------------
     # Build Docker Image
     # -----------------------------------
@@ -80,6 +81,26 @@ jobs:
       run: |
         docker tag $ECR_REPOSITORY:latest \
         $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY:latest
+=======
+      - name: Terraform Validate
+        run: terraform validate
+    # SonarQube Scan
+    # -------------------------------
+    
+      - name: SonarQube Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        with:
+          args: >
+            -Dsonar.projectKey=ecs-terraform
+            -Dsonar.sources=.
+            -Dsonar.host.url=${{ secrets.SONAR_HOST }}
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+     
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -input=false -lock=false -var-file=terraform.tfvars -out=tfplan
+        continue-on-error: true
+>>>>>>> a6a3020 (Added SonarQube configuration)
 
     # -----------------------------------
     # Push Image to ECR

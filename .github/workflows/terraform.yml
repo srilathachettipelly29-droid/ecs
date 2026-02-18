@@ -66,7 +66,7 @@ jobs:
         docker login --username AWS --password-stdin \
         $ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
 
-<<<<<<< HEAD
+
     # -----------------------------------
     # Build Docker Image
     # -----------------------------------

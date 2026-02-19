@@ -49,13 +49,14 @@ jobs:
     # -----------------------------------
     # Run SonarQube Scan
     # -----------------------------------
-    - name: SonarQube Scan
+    - name: Run Sonar Scanner
       run: |
         sonar-scanner \
-          -Dsonar.projectKey=ecs-terraform \
-          -Dsonar.sources=. \
-          -Dsonar.host.url=${{ secrets.SONAR_HOST }} \
-          -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+           -Dsonar.projectKey=ecs-terraform \
+           -Dsonar.sources=. \
+           -Dsonar.host.url=http://localhost:9000 \
+           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+
 
     # -----------------------------------
     # Clone 2048 Game Source Code

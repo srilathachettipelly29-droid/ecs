@@ -2,5 +2,5 @@ projectKey=ecs-terraform
 serverUrl=http://localhost:9000
 serverVersion=26.2.0.119303
 dashboardUrl=http://localhost:9000/dashboard?id=ecs-terraform
-ceTaskId=de77fe62-9a40-42e4-a788-0dc3fb429172
-ceTaskUrl=http://localhost:9000/api/ce/task?id=de77fe62-9a40-42e4-a788-0dc3fb429172
+ceTaskId=e04f48fc-c05d-4e46-b5a8-5f15d0db2492
+ceTaskUrl=http://localhost:9000/api/ce/task?id=e04f48fc-c05d-4e46-b5a8-5f15d0db2492

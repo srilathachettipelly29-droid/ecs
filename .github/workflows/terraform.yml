@@ -49,13 +49,14 @@ jobs:
     # -----------------------------------
     # Run SonarQube Scan
     # -----------------------------------
-    - name: Run Sonar Scanner
+    - name: Sonar Scan
       run: |
         sonar-scanner \
            -Dsonar.projectKey=ecs-terraform \
            -Dsonar.sources=. \
            -Dsonar.host.url=http://localhost:9000 \
-           -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+           -Dsonar.token=${{ secrets.SONAR_TOKEN }}
+
 
 
     # -----------------------------------

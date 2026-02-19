@@ -54,7 +54,7 @@ jobs:
         sonar-scanner \
            -Dsonar.projectKey=ecs-terraform \
            -Dsonar.sources=. \
-           -Dsonar.host.url=http://localhost:9000 \
+           -Dsonar.host.url=${{ secrets.SONAR_HOST }}
            -Dsonar.token=${{ secrets.SONAR_TOKEN }}
 
 
